@@ -15,7 +15,7 @@ async function initializeDatabase() {
     password: '',
   });
   await connection.query(`CREATE DATABASE IF NOT EXISTS CreditAgricole;`);
-  console.log("✅ Base de données 'shop' vérifiée/créée.");
+  console.log("✅ Base de données 'CreditAgricole' vérifiée/créée.");
   await connection.end();
 }
 
@@ -23,6 +23,8 @@ async function initializeDatabase() {
 const db = require('./models');
 
 const apiUtilisateursRouter = require('./routes/apiUtilisateur');
+const apiProjetRouter = require('./routes/apiProjet');
+const apiImageRouter = require('./routes/apiImage');
 
 
 
@@ -46,6 +48,8 @@ app.use('/bootstrap', express.static(path.join(__dirname, 'node_modules/bootstra
 // --- 4. ROUTES ---
 
 app.use('/api/utilisateurs', apiUtilisateursRouter);
+app.use('/api/projets', apiProjetRouter);
+app.use('/api/images', apiImageRouter);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 app.get('/api', (req, res) => {

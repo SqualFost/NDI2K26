@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db'); // 👈 bien le fichier de config
 
 const Utilisateur = sequelize.define('Utilisateur', {
-  utilisateur_id: {
+  id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
@@ -16,6 +16,14 @@ const Utilisateur = sequelize.define('Utilisateur', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  adresse: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  dob: {
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+  },
   email: {
     type: DataTypes.STRING,
     allowNull: false
@@ -23,7 +31,12 @@ const Utilisateur = sequelize.define('Utilisateur', {
   mot_de_passe: {
     type: DataTypes.STRING,
     allowNull: false
-  }
+  },
+  role: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+
 }, {
   tableName: 'Utilisateur', // correspond au nom de la table MySQL existante
   timestamps: false, // désactiver createdAt / updatedAt si ta table n’en a pas
