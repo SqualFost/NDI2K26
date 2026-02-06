@@ -1,39 +1,31 @@
-
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const Image = require('../models/Image');
-const { verifierChamps, verifierLogique } = require('./utils');
-const fs = require('fs'); // Nécessaire pour supprimer le fichier en cas d'erreur
+const { verifierChamps } = require('./utils');
+const fs = require('fs');
 
-
-// 1. Définir le dossier de destination pour le stockage
+// 1. Définir le dossier de destination
 const UPLOADS_FOLDER = path.join(__dirname, '../public/images/projets');
 
-
-// 2. Définir la logique de stockage des fichiers
+// 2. Logique de stockage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // Le dossier où stocker les images
         cb(null, UPLOADS_FOLDER);
     },
     filename: (req, file, cb) => {
-        // Renommer le fichier pour éviter les collisions (UUID + extension originale)
         const newFileName = uuidv4() + path.extname(file.originalname);
         cb(null, newFileName);
     }
 });
 
-// 3. Créer l'instance Multer
+// 3. Instance Multer
 const upload = multer({
     storage: storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // Limite la taille à 5MB (ajustez si besoin)
-    },
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        // Filtrer les types de fichiers (accepter uniquement les images)
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
@@ -41,7 +33,6 @@ const upload = multer({
         }
     }
 });
-
 
 router.get('/', async (req, res) => {
     try {
@@ -52,18 +43,37 @@ router.get('/', async (req, res) => {
     }
 });
 
+// ROUTE POST
 router.post('/image', upload.single('image'), async (req, res) => {
+    /* 👇 LE BLOC SWAGGER DOIT ÊTRE ICI POUR FONCTIONNER AVEC MULTER 👇
+    */
     /*
-        #swagger.tags = ['Upload']
+        #swagger.tags = ['Images']
         #swagger.auto = false
         #swagger.consumes = ['multipart/form-data']
-        #swagger.parameters['article_id'] = { in: 'formData', type: 'integer', required: true, description: 'ID de l\'article' }
-        #swagger.parameters['estPrincipal'] = { in: 'formData', type: 'boolean', required: true, description: 'Image principale ?' }
+        #swagger.parameters['projet_id'] = { 
+            in: 'formData', 
+            type: 'integer', 
+            required: true, 
+            description: 'ID du projet lié' 
+        }
+        #swagger.parameters['isMain'] = { 
+            in: 'formData', 
+            type: 'boolean', 
+            required: true, 
+            description: 'Image principale ?' 
+        }
+        #swagger.parameters['isPreview'] = { 
+            in: 'formData', 
+            type: 'boolean', 
+            required: true, 
+            description: 'Preview ?' 
+        }
         #swagger.parameters['image'] = {
             in: 'formData',
             type: 'file',
             required: true,
-            description: 'Le fichier image à téléverser (max 5MB).'
+            description: 'Le fichier image à téléverser'
         }
     */
 
@@ -73,36 +83,27 @@ router.post('/image', upload.single('image'), async (req, res) => {
     }
 
     try {
-        // 2. Extraction et Parsing (Multer transforme tout en string dans req.body)
-        let { article_id, estPrincipal } = req.body;
+        // 2. Extraction des données
+        let { projet_id, isMain, isPreview } = req.body;
 
-        // Validation des champs requis
-        const erreurs = verifierChamps(req.body, ['article_id', 'estPrincipal']);
+        // Validation
+        const erreurs = verifierChamps(req.body, ['projet_id', 'isMain', 'isPreview']);
         if (erreurs.length > 0) {
-            throw new Error(`Champs manquants : ${erreurs.join(', ')}`); // On lance une erreur pour aller au catch
+            throw new Error(`Champs manquants : ${erreurs.join(', ')}`);
         }
 
-        // // 3. Vérification de l'article
-        // const articleExiste = await Article.findByPk(article_id);
-        // if (!articleExiste) {
-        //     // L'article n'existe pas, c'est une erreur client (404)
-        //     // MAIS le fichier est déjà sur le disque, il faut le supprimer !
-        //     const error = new Error("L'article n'existe pas");
-        //     error.statusCode = 404;
-        //     throw error;
-        // }
-
-        // 4. Création en Base de Données
+        // 3. Création en Base de Données
         const fileUrl = `/images/projets/${req.file.filename}`;
 
         const nouvelleImage = await Image.create({
-            article_id: parseInt(article_id),     // Assurer le type Int
-            url: fileUrl,                         // Le champ s'appelle 'url' dans votre modèle
-            est_principale: estPrincipal === 'true' || estPrincipal === true, // Gestion du booléen reçu en string
-            est_preview: false
+            projet_id: parseInt(projet_id),
+            url: fileUrl,
+            // CORRECTION ICI : on utilise bien 'isMain' et 'isPreview'
+            isMain: isMain === 'true' || isMain === true,       
+            isPreview: isPreview === 'true' || isPreview === true 
         });
 
-        // 5. Succès
+        // 4. Succès
         res.status(201).json({
             message: "Image téléchargée et liée avec succès.",
             url: fileUrl,
@@ -110,29 +111,25 @@ router.post('/image', upload.single('image'), async (req, res) => {
         });
 
     } catch (error) {
-        // GESTION DES ERREURS (Nettoyage)
-        // Si quoi que ce soit échoue (validation, DB, etc.), on supprime le fichier uploadé
+        // Nettoyage en cas d'erreur
         if (req.file && req.file.path) {
             fs.unlink(req.file.path, (err) => {
-                if (err) console.error("Erreur lors de la suppression du fichier orphelin:", err);
+                if (err) console.error("Erreur suppression fichier:", err);
             });
         }
-
         console.error(error);
-        const status = error.statusCode || 400; // 400 par défaut car souvent erreur de validation
+        const status = error.statusCode || 400;
         res.status(status).json({ message: error.message || "Erreur lors de l'upload" });
     }
 });
 
-router.delete('/deleteAllImage/:article_id', async (req, res) => {
+router.delete('/deleteAllImage/:projet_id', async (req, res) => {
+    
     try {
-        const id = parseInt(req.params.article_id, 10);
+        const id = parseInt(req.params.projet_id, 10);
         await Image.destroy({
-            where: {
-                article_id: id
-            }
+            where: { projet_id: id }
         });
-
         res.status(204).send();
     } catch (err) {
         res.status(500).json({ message: err.message });
