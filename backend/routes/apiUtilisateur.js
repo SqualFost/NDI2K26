@@ -52,6 +52,8 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+
 // ---------------------
 // Obtenir un utilisateur par ID
 // ---------------------
@@ -64,6 +66,22 @@ router.get('/:id', async (req, res) => {
     if (!utilisateur) return res.status(404).json({ message: 'Utilisateur non trouvé' });
 
     res.json(utilisateur);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+router.get('/:id/projets', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
+
+    const utilisateur = await Utilisateur.findByPk(id);
+    if (!utilisateur) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    const projets = await utilisateur.getProjets();
+
+    res.json(projets);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

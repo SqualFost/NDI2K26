@@ -67,6 +67,22 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+
+router.get('/:id/images', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
+
+    const projet = await Projet.findByPk(id);
+    if (!projet) return res.status(404).json({ message: 'Projet non trouvé' });
+    const images = await projet.getImages();
+
+    res.json(images);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ---------------------
 // Modifier un projet
 // ---------------------
@@ -122,6 +138,8 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+
 
 
 module.exports = router;

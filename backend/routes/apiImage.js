@@ -6,6 +6,8 @@ const { v4: uuidv4 } = require('uuid');
 const Image = require('../models/Image');
 const { verifierChamps } = require('./utils');
 const fs = require('fs');
+const Projet = require('../models/Projet');
+
 
 // 1. Définir le dossier de destination
 const UPLOADS_FOLDER = path.join(__dirname, '../public/images/projets');
@@ -91,14 +93,20 @@ router.post('/image', upload.single('image'), async (req, res) => {
         if (erreurs.length > 0) {
             throw new Error(`Champs manquants : ${erreurs.join(', ')}`);
         }
-
+        const projetExiste = await Projet.findByPk(projet_id);
+        if (!projetExiste) {
+            // L'article n'existe pas, c'est une erreur client (404)
+            // MAIS le fichier est déjà sur le disque, il faut le supprimer !
+            const error = new Error("Le projet n'existe pas");
+            error.statusCode = 404;
+            throw error;
+        }
         // 3. Création en Base de Données
         const fileUrl = `/images/projets/${req.file.filename}`;
 
         const nouvelleImage = await Image.create({
             projet_id: parseInt(projet_id),
             url: fileUrl,
-            // CORRECTION ICI : on utilise bien 'isMain' et 'isPreview'
             isMain: isMain === 'true' || isMain === true,       
             isPreview: isPreview === 'true' || isPreview === true 
         });
