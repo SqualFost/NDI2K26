@@ -225,7 +225,7 @@ export default function CreateProject() {
             {step === 3 && (
                 <View style={styles.stepWrapper}>
                   <Text style={styles.title}>
-                    Secteur d'activité
+                    Secteur dactivité
                   </Text>
 
                   <View style={styles.categoryGrid}>
