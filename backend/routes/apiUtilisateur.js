@@ -10,8 +10,8 @@ const { verifierChamps } = require('./utils');
 // ---------------------
 router.post('/', async (req, res) => {
   try {
-    const { nom, prenom, adresse, dob, phone, email, mot_de_passe,role } = req.body;
-    const champsRequis = ['nom', 'prenom', 'adresse', 'dob', 'phone', 'email', 'mot_de_passe','role'];
+    const {nom, prenom, email, mot_de_passe } = req.body;
+    const champsRequis = ['nom','prenom','email','mot_de_passe' ];
 
     const erreurs = verifierChamps(req.body, champsRequis);
 
@@ -25,12 +25,8 @@ router.post('/', async (req, res) => {
     const utilisateur = await Utilisateur.create({
       nom,
       prenom,
-      adresse,
-      dob,
-      phone,
       email,
-      mot_de_passe,
-      role
+      mot_de_passe
     });
 
     res.status(201).json(utilisateur);
@@ -94,9 +90,9 @@ router.put('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
-    const { nom, prenom, adresse, dob, phone, email, mot_de_passe ,role} = req.body;
+    const { nom,prenom, email, mot_de_passe } = req.body;
 
-    const champsRequis = ['nom', 'prenom', 'adresse', 'dob', 'phone', 'email', 'mot_de_passe','role'];
+    const champsRequis = ['nom','prenom','email','mot_de_passe' ];
 
     const erreurs = verifierChamps(req.body, champsRequis);
 
@@ -112,12 +108,8 @@ router.put('/:id', async (req, res) => {
     await utilisateur.update({
       nom,
       prenom,
-      adresse,
-      dob,
-      phone,
       email,
-      mot_de_passe,
-      role
+      mot_de_passe
     });
 
     res.json(utilisateur);
@@ -139,6 +131,33 @@ router.delete('/:id', async (req, res) => {
 
     await utilisateur.destroy();
     res.status(204).send(); // Pas de contenu
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// On change GET en POST pour la sécurité (les infos sont dans le body, pas l'URL)
+router.post('/login', async (req, res) => {
+  try {
+    // On récupère les données depuis le body
+    const { email, passwd } = req.body;
+
+    if (!email || !passwd) {
+      return res.status(400).json({ message: 'Email et mot de passe requis' });
+    }
+
+    const utilisateur = await Utilisateur.findOne({
+      where: {
+        email: email, // Recherche exacte (pas de LIKE)
+        mot_de_passe: passwd // Recherche exacte OBLIGATOIRE pour un mot de passe
+      }
+    });
+
+    if (!utilisateur) {
+      return res.status(404).json({ message: 'Email ou mot de passe incorrect' });
+    }
+
+    res.json(utilisateur);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

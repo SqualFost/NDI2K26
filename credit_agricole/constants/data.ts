@@ -26,3 +26,11 @@ export type Projet = {
     categorie:string,
     localisation : string,
 }
+
+export type Utilisateur={
+    id:number,
+    nom:string,
+    prenom:string,
+    email:string,
+    mot_de_passe:string,
+}

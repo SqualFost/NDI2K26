@@ -10,6 +10,8 @@ import {
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Utilisateur } from '@/constants/data';
+import { addUser } from '@/api/utilisateur';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -20,11 +22,14 @@ export default function RegisterScreen() {
 
 
   const handleRegister = () => {
-    if (!name || !email || !password || !confirm) return;
-
-    if (password !== confirm) return;
-
-    // PLUS TARD → API / Firebase
+    const user:Utilisateur = {
+      id: 0,
+      nom: name,
+      prenom: prenom,
+      email: email,
+      mot_de_passe: password
+    };
+    addUser(user);
     router.replace('/(tabs)');
   };
 
