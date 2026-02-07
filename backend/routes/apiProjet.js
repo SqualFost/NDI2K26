@@ -94,9 +94,8 @@ router.put('/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
 
-    const { nom, description, longitude, latitude, utilisateur_id, date_debut  } = req.body;
-    const champsRequis = ['nom', 'description', 'longitude', 'latitude', 'utilisateur_id', 'date_debut' ];
-
+    const { nom, description, longitude, latitude, utilisateur_id, date_debut ,budget,categorie,localisation  } = req.body;
+    const champsRequis = ['nom', 'description', 'longitude', 'latitude', 'utilisateur_id', 'date_debut' ,'budget','categorie','localisation' ];
 
     const erreurs = verifierChamps(req.body, champsRequis);
 
@@ -115,7 +114,10 @@ router.put('/:id', async (req, res) => {
       longitude,
       latitude,
       utilisateur_id,
-      date_debut
+      date_debut,
+      budget,
+      categorie,
+      localisation,
     });
 
     res.json(projet);
