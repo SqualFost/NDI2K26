@@ -13,3 +13,16 @@ export type SettingsProps = {
     color?: string,
     rightElement?: React.ReactNode,
 }
+
+export type Projet = {
+    id :number,
+    nom : string,
+    description : string,
+    longitude : number,
+    latitude : number,
+    utilisateur_id:number,
+    date_debut:Date,
+    budget:number,
+    categorie:string,
+    localisation : string,
+}

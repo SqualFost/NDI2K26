@@ -13,7 +13,8 @@ import {
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Props } from '@/constants/data';
+import { Projet, Props } from '@/constants/data';
+import { addProjet } from '@/api/projet';
 
 export default function CreateProject() {
   const [step, setStep] = useState(0);
@@ -31,6 +32,21 @@ export default function CreateProject() {
   const nextStep = () => {
     if (step < totalSteps) {
       setStep(step + 1);
+    }
+    else{
+      const projet : Projet = {
+        nom: projectName,
+        description: projectDesc,
+        budget: parseFloat(budget),
+        categorie: category,
+        localisation: location,
+        id: 0,
+        longitude: 0,
+        latitude: 0,
+        utilisateur_id: 1,
+        date_debut: new Date()
+      }
+      addProjet(projet);
     }
   };
 

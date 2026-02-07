@@ -36,6 +36,20 @@ const Projet = sequelize.define('Projet', {
     type: DataTypes.DATEONLY,
     allowNull: false,
   },
+  budget : {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  categorie : {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  localisation : {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  
   
 }, {
   tableName: 'Projet', // correspond au nom de la table MySQL existante
