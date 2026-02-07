@@ -1,11 +1,13 @@
-import React, { useRef } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import React, { useRef, useState, useEffect, memo } from 'react';
+import { StyleSheet, View, Text, Platform } from 'react-native';
+import MapView, { Marker, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 
-interface Project {
+export interface Project {
   id: string;
   name: string;
   budget: string;
+  desc: string;
+  category: string;
   lat: number;
   lng: number;
 }
@@ -13,16 +15,57 @@ interface Project {
 interface MapProps {
   markers?: Project[];
   onMarkerPress?: (item: Project) => void;
+  onRegionChange?: (region: Region) => void;
 }
 
-export function MapComp({ markers = [], onMarkerPress }: MapProps) {
+// --- 1. COMPOSANT MARQUEUR ISOLÉ (Anti-Freeze / Anti-Crash) ---
+const CustomMarker = memo(({ project, onPress }: { project: Project, onPress: () => void }) => {
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  useEffect(() => {
+    // Stop le rendu après 100ms pour figer l'image et libérer le CPU
+    const timer = setTimeout(() => {
+      setTracksViewChanges(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+      <Marker
+          coordinate={{ latitude: project.lat, longitude: project.lng }}
+          onPress={onPress}
+          tracksViewChanges={tracksViewChanges}
+          stopPropagation={true}
+      >
+        <View style={styles.markerContainer}>
+          <View style={styles.pillContainer}>
+            {/* PRIX (Vert) */}
+            <View style={styles.priceSection}>
+              <Text style={styles.priceText}>{project.budget}</Text>
+            </View>
+            {/* NOM (Blanc) */}
+            <View style={styles.nameSection}>
+              <Text style={styles.nameText} numberOfLines={1}>
+                {project.name}
+              </Text>
+            </View>
+          </View>
+          {/* Flèche */}
+          <View style={styles.arrow} />
+        </View>
+      </Marker>
+  );
+});
+
+// --- 2. COMPOSANT CARTE PRINCIPAL ---
+export function MapComp({ markers = [], onMarkerPress, onRegionChange }: MapProps) {
   const mapRef = useRef<MapView>(null);
 
   const INITIAL_REGION = {
     latitude: 43.7000,
-    longitude: 7.1500,
-    latitudeDelta: 0.5,
-    longitudeDelta: 0.5,
+    longitude: 7.2600, // Centré sur Nice
+    latitudeDelta: 0.15, // Zoom assez proche
+    longitudeDelta: 0.15,
   };
 
   return (
@@ -31,9 +74,9 @@ export function MapComp({ markers = [], onMarkerPress }: MapProps) {
             ref={mapRef}
             style={styles.map}
             initialRegion={INITIAL_REGION}
-            provider={PROVIDER_DEFAULT}
+            provider={PROVIDER_DEFAULT} // Utilise Apple Maps sur iOS (Fluide)
 
-            // Optimisations iOS
+            // Optimisations
             showsUserLocation={true}
             showsMyLocationButton={false}
             showsPointsOfInterest={false}
@@ -41,40 +84,19 @@ export function MapComp({ markers = [], onMarkerPress }: MapProps) {
             showsTraffic={false}
             rotateEnabled={false}
             pitchEnabled={false}
-            minZoomLevel={8.5}
+            minZoomLevel={8.5} // Empêche de trop dézoomer
+
+            // C'est ici qu'on détecte le mouvement pour filtrer la liste
+            onRegionChangeComplete={(region) => {
+              if (onRegionChange) onRegionChange(region);
+            }}
         >
           {markers.map((project) => (
-              <Marker
+              <CustomMarker
                   key={project.id}
-                  coordinate={{ latitude: project.lat, longitude: project.lng }}
+                  project={project}
                   onPress={() => onMarkerPress && onMarkerPress(project)}
-                  tracksViewChanges={false} // Toujours vital pour éviter le freeze
-                  stopPropagation={true}
-              >
-                {/* CONTENEUR GLOBAL DU MARQUEUR */}
-                <View style={styles.markerContainer}>
-
-                  {/* LA PILULE (PRIX + NOM) */}
-                  <View style={styles.pillContainer}>
-
-                    {/* Partie Gauche : PRIX (Fond Vert) */}
-                    <View style={styles.priceSection}>
-                      <Text style={styles.priceText}>{project.budget}</Text>
-                    </View>
-
-                    {/* Partie Droite : NOM (Fond Blanc) */}
-                    <View style={styles.nameSection}>
-                      <Text style={styles.nameText} numberOfLines={1}>
-                        {project.name}
-                      </Text>
-                    </View>
-
-                  </View>
-
-                  {/* La petite flèche en bas */}
-                  <View style={styles.arrow} />
-                </View>
-              </Marker>
+              />
           ))}
         </MapView>
       </View>
@@ -85,17 +107,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   map: { width: '100%', height: '100%' },
 
-  // Conteneur pour aligner la pilule et la flèche
-  markerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // La "Pilule" principale
+  // Styles Marqueurs (Airbnb)
+  markerContainer: { alignItems: 'center', justifyContent: 'center' },
   pillContainer: {
-    flexDirection: 'row', // Alignement horizontal
+    flexDirection: 'row',
     backgroundColor: 'white',
-    borderRadius: 20, // Bords très arrondis
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -103,21 +120,14 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: 'hidden',
   },
-
   priceSection: {
-    backgroundColor: '#397262',
+    backgroundColor: '#397262', // Vert CA
     paddingVertical: 6,
     paddingHorizontal: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  priceText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-
-  // Section Nom
+  priceText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   nameSection: {
     backgroundColor: '#fff',
     paddingVertical: 6,
@@ -125,12 +135,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     maxWidth: 120,
   },
-  nameText: {
-    color: '#333',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
+  nameText: { color: '#333', fontSize: 12, fontWeight: '600' },
   arrow: {
     width: 0,
     height: 0,

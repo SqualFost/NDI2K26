@@ -13,17 +13,18 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Region } from 'react-native-maps';
 
-// Import du nouveau composant MapComp (Native)
-import { MapComp } from '@/components/carte_comp';
+// Import du composant carte
+import { MapComp, Project } from '@/components/carte_comp';
 
-// DONNÉES AVEC COORDONNÉES GPS (Nice & Alentours)
-const PROJECTS = [
-  { id: '1', name: 'Refroidissement urbain', budget: '12k€', desc: 'Toits végétalisés Mairie.', category: 'Ecologie', lat: 43.7034, lng: 7.2663 },
+// --- DONNÉES ---
+const PROJECTS: Project[] = [
+  { id: '1', name: 'Refroidissement', budget: '12k€', desc: 'Toits végétalisés Mairie.', category: 'Ecologie', lat: 43.7034, lng: 7.2663 },
   { id: '2', name: 'Handi-Sport 2026', budget: '8k€', desc: 'Fauteuils roulants Port.', category: 'Sport', lat: 43.6950, lng: 7.2800 },
   { id: '3', name: 'Rucher Partagé', budget: '3k€', desc: 'Ruches Gare Thiers.', category: 'Ecologie', lat: 43.7050, lng: 7.2620 },
   { id: '4', name: 'Potager Solidaire', budget: '4.5k€', desc: 'Jardins partagés Aéroport.', category: 'Social', lat: 43.6650, lng: 7.2050 },
-  { id: '5', name: 'Piste Cyclable Sud', budget: '25k€', desc: 'Promenade des Anglais.', category: 'Transport', lat: 43.6900, lng: 7.2400 },
+  { id: '5', name: 'Piste Cyclable', budget: '25k€', desc: 'Promenade des Anglais.', category: 'Transport', lat: 43.6900, lng: 7.2400 },
   { id: '6', name: 'Atelier Numérique', budget: '2k€', desc: 'Cours séniors Cimiez.', category: 'Social', lat: 43.7200, lng: 7.2750 },
   { id: '7', name: 'Nettoyage Plage', budget: '1.5k€', desc: 'Journée citoyenne Cannes.', category: 'Ecologie', lat: 43.5528, lng: 7.0174 },
 ];
@@ -31,13 +32,14 @@ const PROJECTS = [
 const CATEGORIES = ['Tous', 'Ecologie', 'Social', 'Sport', 'Transport'];
 
 export default function HomeScreen() {
-  // --- ÉTATS ---
+  // États
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [showFilters, setShowFilters] = useState(false);
+  const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
 
-  // --- FILTRAGE ---
-  const filteredProjects = useMemo(() => {
+  // --- FILTRAGE POUR LA CARTE (Texte + Catégorie uniquement) ---
+  const mapMarkers = useMemo(() => {
     return PROJECTS.filter((item) => {
       const matchesText = item.name.toLowerCase().includes(searchText.toLowerCase()) ||
           item.desc.toLowerCase().includes(searchText.toLowerCase());
@@ -46,18 +48,39 @@ export default function HomeScreen() {
     });
   }, [searchText, selectedCategory]);
 
-  // --- CONFIG BOTTOM SHEET ---
+  // --- FILTRAGE POUR LA LISTE (Texte + Catégorie + RÉGION VISIBLE) ---
+  const listProjects = useMemo(() => {
+    return mapMarkers.filter((item) => {
+      // Si la carte n'est pas encore chargée, on montre tout ce qui correspond aux filtres
+      if (!currentRegion) return true;
+
+      // Calcul des bordures de l'écran
+      const minLat = currentRegion.latitude - (currentRegion.latitudeDelta / 2);
+      const maxLat = currentRegion.latitude + (currentRegion.latitudeDelta / 2);
+      const minLng = currentRegion.longitude - (currentRegion.longitudeDelta / 2);
+      const maxLng = currentRegion.longitude + (currentRegion.longitudeDelta / 2);
+
+      // On garde si le projet est dans l'écran
+      return (
+          item.lat >= minLat &&
+          item.lat <= maxLat &&
+          item.lng >= minLng &&
+          item.lng <= maxLng
+      );
+    });
+  }, [mapMarkers, currentRegion]);
+
+  // Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['15%', '45%', '90%'], []);
 
-  // Gestion du clic sur un marqueur de la carte
-  const handleMarkerPress = (project: any) => {
-    // Ici, tu pourrais faire scroller la liste vers cet item
+  // Gestion Clic
+  const handleMarkerPress = (project: Project) => {
     Alert.alert(project.name, `${project.desc}\nBudget: ${project.budget}`);
   };
 
-  // Rendu Carte Liste
-  const renderItem = useCallback(({ item }: { item: typeof PROJECTS[0] }) => (
+  // Rendu Liste
+  const renderItem = useCallback(({ item }: { item: Project }) => (
       <TouchableOpacity style={styles.projectCard} onPress={() => handleMarkerPress(item)}>
         <View style={styles.imagePlaceholder}>
           <Ionicons name="image-outline" size={24} color="#4e8076" />
@@ -79,15 +102,16 @@ export default function HomeScreen() {
   return (
       <GestureHandlerRootView style={styles.container}>
 
-        {/* 1. LA CARTE NATIVE (Expo Maps) */}
+        {/* 1. CARTE (Affiche tous les projets filtrés, même hors écran pour savoir où aller) */}
         <View style={styles.mapContainer}>
           <MapComp
-              markers={filteredProjects}
+              markers={mapMarkers}
               onMarkerPress={handleMarkerPress}
+              onRegionChange={setCurrentRegion} // Met à jour la zone visible
           />
         </View>
 
-        {/* 2. HEADER FLOTTANT (Recherche + Filtres) */}
+        {/* 2. HEADER */}
         <SafeAreaView style={styles.floatingHeader} pointerEvents="box-none">
           <View style={styles.searchBarContainer}>
             <View style={styles.searchBar}>
@@ -115,16 +139,12 @@ export default function HomeScreen() {
                       <TouchableOpacity
                           key={cat}
                           style={[styles.filterChip, selectedCategory === cat && styles.filterChipSelected]}
-
+                          // CORRECTION DU BUG DE CRASH ICI
                           onPress={() => {
-                            if (selectedCategory !== cat) {
-                              setSelectedCategory(cat);
-                            }
+                            if (selectedCategory !== cat) setSelectedCategory(cat);
                           }}
                       >
-                        <Text style={[styles.filterText, selectedCategory === cat && styles.filterTextSelected]}>
-                          {cat}
-                        </Text>
+                        <Text style={[styles.filterText, selectedCategory === cat && styles.filterTextSelected]}>{cat}</Text>
                       </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -144,14 +164,14 @@ export default function HomeScreen() {
           <View style={styles.contentContainer}>
             <View style={styles.sheetHeaderRow}>
               <Text style={styles.sheetTitle}>
-                {filteredProjects.length > 0 ? "Projets à proximité" : "Aucun résultat"}
+                {listProjects.length > 0 ? "Dans cette zone" : "Aucun projet ici"}
               </Text>
-              <Text style={styles.sheetCount}>{filteredProjects.length}</Text>
+              <Text style={styles.sheetCount}>{listProjects.length}</Text>
             </View>
-            <Text style={styles.sheetSubtitle}>Découvrez les initiatives locales</Text>
+            <Text style={styles.sheetSubtitle}>Déplacez la carte pour voir plus</Text>
 
             <BottomSheetFlatList
-                data={filteredProjects}
+                data={listProjects} // Affiche uniquement ce qui est dans l'écran
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
