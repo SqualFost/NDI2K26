@@ -12,12 +12,15 @@
     "debug": "~2.6.9",
     "express": "^4.22.1",
     "http-errors": "~1.6.3",
-    "jade": "^1.9.2",
+    "jade": "^0.31.2",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
     "sequelize": "^6.37.7",
     "swagger-autogen": "^2.23.7",
     "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }

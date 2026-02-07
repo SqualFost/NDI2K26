@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
   Alert, // Important : Ajout de l'alerte
 } from 'react-native';
 
@@ -16,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 // Assure-toi que ces imports existent bien dans ton projet
 import { Projet, Props } from '@/constants/data';
 import { addProjet } from '@/api/projet';
+
 
 export default function CreateProject() {
   const [step, setStep] = useState(0);
@@ -135,6 +137,13 @@ export default function CreateProject() {
             {/* STEP 0 : ACCUEIL */}
             {step === 0 && (
                 <View style={styles.step0Wrapper}>
+                  <View style={styles.logoContainer}>
+                    <Image
+                        source={require('@/assets/logo.png')}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                  </View>
                   <Text style={styles.step0Title}>
                     Devenez acteur de votre territoire avec le Crédit Agricole
                   </Text>
@@ -342,6 +351,15 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 5,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+    marginBottom: 50,
+  },
+  logo: {
+    width: 320,
+    height: 100,
   },
   progressContainer: {
     flex: 1,
