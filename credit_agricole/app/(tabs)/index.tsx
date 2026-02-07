@@ -136,7 +136,7 @@ export default function CreateProject() {
             {step === 0 && (
                 <View style={styles.step0Wrapper}>
                   <Text style={styles.step0Title}>
-                    Lancez votre projet solidaire
+                    Devenez acteur de votre territoire avec le Crédit Agricole
                   </Text>
 
                   <Text style={styles.step0Subtitle}>
@@ -148,7 +148,7 @@ export default function CreateProject() {
                       onPress={() => setStep(1)}
                   >
                     <Text style={styles.startButtonText}>
-                      Créer votre projet
+                      Déclarer votre besoin
                     </Text>
                     <Ionicons
                         name="rocket-outline"
@@ -163,11 +163,11 @@ export default function CreateProject() {
             {step === 1 && (
                 <View style={styles.stepWrapper}>
                   <Text style={styles.title}>
-                    Décrivez-nous votre projet
+                    Décrivez-nous votre besoin
                   </Text>
 
                   <View style={styles.inputSection}>
-                    <Label icon="briefcase-outline" text="Nom du Projet" />
+                    <Label icon="briefcase-outline" text="Nom du Besoin" />
                     <TextInput
                         style={styles.input}
                         placeholder="Ex: Dons d'ordinateurs recyclés"
@@ -194,7 +194,7 @@ export default function CreateProject() {
             {step === 2 && (
                 <View style={styles.stepWrapper}>
                   <Text style={styles.title}>
-                    Quel est votre besoin ?
+                    Quel est votre besoin économique ?
                   </Text>
 
                   <View style={styles.inputSection}>
@@ -261,7 +261,7 @@ export default function CreateProject() {
             {step === 4 && (
                 <View style={styles.stepWrapper}>
                   <Text style={styles.title}>
-                    Où se situe le projet ?
+                    Où cela se situe ?
                   </Text>
 
                   <View style={styles.inputSection}>

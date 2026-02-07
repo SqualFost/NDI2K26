@@ -22,7 +22,7 @@ export default function RootLayout() {
     const checkAuth = async () => {
       // ICI plus tard : token / storage
       setTimeout(() => {
-        setIsLogged(false); // true si connecté
+        setIsLogged(true); // true si connecté
         setLoading(false);
       }, 500);
     };
