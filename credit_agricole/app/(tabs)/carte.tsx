@@ -8,7 +8,7 @@ import {
   ScrollView,
   Keyboard,
   Alert,
-  Image
+  Image // AJOUT
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
@@ -19,6 +19,7 @@ import { Region } from 'react-native-maps';
 // Import du composant carte
 import { MapComp, Project } from '@/components/carte_comp';
 import { getAllProjets } from '@/api/projet';
+// AJOUT : Import de BASE_URL pour construire les liens images
 import { BASE_URL } from '@/api/url'; 
 
 // --- DONNÉES ---
@@ -30,7 +31,7 @@ export type ProjectType = {
   categorie: string;
   latitude: number;
   longitude: number;
-  img: string;
+  img: string; // AJOUT
 };
 
 const CATEGORIES = ['Tous', 'Environnement', 'Social', 'Culture', 'Economie'];
@@ -48,15 +49,12 @@ export default function HomeScreen() {
     try {
       const rep = await getAllProjets();
       
-      // On vérifie que rep est bien un tableau pour éviter le crash .map
-      if (!Array.isArray(rep)) {
-          console.warn("L'API n'a pas renvoyé un tableau :", rep);
-          return;
-      }
-
+      // On transforme les données pour préparer l'URL de l'image
       const formatted = rep.map((item: any, index: number) => {
+          // 1. Image par défaut
           let finalImageUrl = `https://picsum.photos/id/${(index % 50) + 150}/200/200`;
           
+          // 2. Récupération via le tableau Images (API)
           const imagesDuProjet = item.Images || item.images || [];
 
           if (imagesDuProjet.length > 0) {
@@ -66,6 +64,7 @@ export default function HomeScreen() {
                   if (imageObj.url.startsWith('http')) {
                       finalImageUrl = imageObj.url;
                   } else {
+                      // Gestion url locale avec BASE_URL
                       const cleanPath = imageObj.url.startsWith('/') ? imageObj.url : `/${imageObj.url}`;
                       finalImageUrl = `${BASE_URL}${cleanPath}`;
                   }
@@ -74,6 +73,7 @@ export default function HomeScreen() {
 
           return {
               ...item,
+              // On s'assure que les champs correspondent au type ProjectType
               img: finalImageUrl
           };
       });
@@ -89,38 +89,29 @@ export default function HomeScreen() {
   }, []);
 
 
-  // --- FILTRAGE SÉCURISÉ (CORRECTION DU CRASH) ---
+  // --- FILTRAGE POUR LA CARTE (Texte + Catégorie uniquement) ---
   const mapMarkers = useMemo(() => {
-    if (!projects) return [];
-
     return projects.filter((item) => {
-      // 1. PROTECTION CRASH : On utilise (valeur || "") pour garantir que ce soit une string
-      const nameSafe = (item.nom || "").toLowerCase();
-      const descSafe = (item.description || "").toLowerCase();
-      const searchSafe = searchText.toLowerCase();
-
-      const matchesText = nameSafe.includes(searchSafe) || descSafe.includes(searchSafe);
-      
-      // 2. Filtre catégorie
+      const matchesText = item.nom?.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchText.toLowerCase());
       const matchesCategory = selectedCategory === 'Tous' || item.categorie === selectedCategory;
-      
-      // 3. Filtre coordonnées (La map plante si lat/lng sont null)
-      const hasCoords = item.latitude != null && item.longitude != null;
-
-      return matchesText && matchesCategory && hasCoords;
+      return matchesText && matchesCategory;
     });
   }, [projects, searchText, selectedCategory]);
 
   // --- FILTRAGE POUR LA LISTE (Texte + Catégorie + RÉGION VISIBLE) ---
   const listProjects = useMemo(() => {
     return mapMarkers.filter((item) => {
+      // Si la carte n'est pas encore chargée, on montre tout ce qui correspond aux filtres
       if (!currentRegion) return true;
 
+      // Calcul des bordures de l'écran
       const minLat = currentRegion.latitude - (currentRegion.latitudeDelta / 2);
       const maxLat = currentRegion.latitude + (currentRegion.latitudeDelta / 2);
       const minLng = currentRegion.longitude - (currentRegion.longitudeDelta / 2);
       const maxLng = currentRegion.longitude + (currentRegion.longitudeDelta / 2);
 
+      // On garde si le projet est dans l'écran
       return (
           item.latitude >= minLat &&
           item.latitude <= maxLat &&
@@ -136,12 +127,13 @@ export default function HomeScreen() {
 
   // Gestion Clic
   const handleMarkerPress = (project: any) => {
-    Alert.alert(project.nom || "Projet", `${project.description || "Pas de description"}\nBudget: ${project.budget || 0} €`);
+    Alert.alert(project.nom, `${project.description}\nBudget: ${project.budget} €`);
   };
 
   // Rendu Liste
   const renderItem = useCallback(({ item }: { item: ProjectType }) => (
       <TouchableOpacity style={styles.projectCard} onPress={() => handleMarkerPress(item)}>
+        {/* REMPLACEMENT DU PLACEHOLDER PAR L'IMAGE */}
         <Image 
             source={{ uri: item.img }} 
             style={styles.cardImage}
@@ -172,7 +164,7 @@ export default function HomeScreen() {
               onMarkerPress={handleMarkerPress}
               onRegionChange={setCurrentRegion}
               initialRegion={{
-                latitude: 43.55, 
+                latitude: 43.55, // Centré un peu plus large (Var/Alpes-Maritimes)
                 longitude: 6.5,
                 latitudeDelta: 1.5,
                 longitudeDelta: 1.5,
@@ -240,8 +232,7 @@ export default function HomeScreen() {
 
             <BottomSheetFlatList
                 data={listProjects}
-                // Sécurité : on utilise un ID unique même si item.id est manquant (rare)
-                keyExtractor={(item) => (item.id ? item.id.toString() : Math.random().toString())}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
@@ -300,6 +291,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
     borderRadius: 16, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#e5f3f5',
   },
+  // NOUVEAU STYLE POUR L'IMAGE
   cardImage: { 
     width: 60, 
     height: 60, 
