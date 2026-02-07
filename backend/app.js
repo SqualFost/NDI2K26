@@ -80,25 +80,20 @@ async function seedDatabase() {
     ];
     await db.Projet.bulkCreate(projets, { ignoreDuplicates: true });
 
-    // 3. IMAGES
+   // 3. IMAGES
     const images = [
-      { id: 1, url: 'https://cdn/voile_handicap.jpg', projet_id: 1, isMain: true, isPreview: true },
-      { id: 2, url: 'https://cdn/dauphins.jpg', projet_id: 1, isMain: false, isPreview: false },
-      { id: 3, url: 'https://cdn/atelier_velo.jpg', projet_id: 2, isMain: true, isPreview: true },
-      { id: 4, url: 'https://cdn/bistrot_devanture.jpg', projet_id: 3, isMain: true, isPreview: true },
-      { id: 5, url: 'https://cdn/cuisine_inclusive.jpg', projet_id: 3, isMain: false, isPreview: true },
-      { id: 6, url: 'https://cdn/raptor_museum.jpg', projet_id: 4, isMain: true, isPreview: true },
-      { id: 7, url: 'https://cdn/inauguration.jpg', projet_id: 4, isMain: false, isPreview: false },
-      // Mises à jour des IDs pour correspondre aux nouveaux projets 04/06
-      { id: 8, url: 'https://cdn/randonnee_ecotrail.jpg', projet_id: 5, isMain: true, isPreview: true },
-      { id: 9, url: 'https://cdn/jardin_partage.jpg', projet_id: 6, isMain: true, isPreview: true },
-      { id: 10, url: 'https://cdn/atelier_peinture.jpg', projet_id: 7, isMain: true, isPreview: true },
-      { id: 11, url: 'https://cdn/nettoyage_plage.jpg', projet_id: 8, isMain: true, isPreview: true },
-      { id: 12, url: 'https://cdn/bistrot_solidaire.jpg', projet_id: 9, isMain: true, isPreview: true },
-      { id: 13, url: 'https://cdn/musee_menton.jpg', projet_id: 10, isMain: true, isPreview: true },
-      { id: 14, url: 'https://cdn/atelier_cirque.jpg', projet_id: 11, isMain: true, isPreview: true },
-      { id: 15, url: 'https://cdn/festival_livre.jpg', projet_id: 12, isMain: true, isPreview: true }
+      { id: 16, projet_id: 2, url: '/images/projets/b39f07f8-e8b8-4cc9-87e0-56f52df33d60.png', isMain: true, isPreview: false },
+      { id: 17, projet_id: 4, url: '/images/projets/51575f36-67bf-4b1f-949c-50a69d1005a9.png', isMain: true, isPreview: false },
+      { id: 18, projet_id: 11, url: '/images/projets/370e0d1a-26b8-4941-abb8-a25fa23f9ad1.png', isMain: true, isPreview: false },
+      { id: 19, projet_id: 16, url: '/images/projets/433f4f6d-b205-467b-8ab8-66a15eb9295d.png', isMain: true, isPreview: false },
+      { id: 20, projet_id: 6, url: '/images/projets/78e598b2-6383-41b0-a2e9-c9e7562ec364.png', isMain: true, isPreview: false },
+      { id: 21, projet_id: 3, url: '/images/projets/f108df20-81e3-454e-8bfd-80692fe39d7b.png', isMain: true, isPreview: false },
+      { id: 22, projet_id: 1, url: '/images/projets/5ec8f18c-1654-4daf-b062-0dbc98d666f5.png', isMain: true, isPreview: false },
+      { id: 23, projet_id: 13, url: '/images/projets/c77a3f7c-83d1-4ada-987d-49d5ab6d8c5c.png', isMain: true, isPreview: false },
+      { id: 24, projet_id: 17, url: '/images/projets/717a146d-3c36-4a31-843e-56118152b957.png', isMain: true, isPreview: false },
+      { id: 25, projet_id: 7, url: '/images/projets/4a76c971-aeba-407a-b8c7-bd67592e2008.png', isMain: true, isPreview: false }
     ];
+
     await db.Image.bulkCreate(images, { ignoreDuplicates: true });
 
     console.log("✅ Données insérées avec succès (Zone 83/06/04) !");
