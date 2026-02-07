@@ -21,8 +21,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-// Assure-toi que ce chemin est bon
+// 1. IMPORTS API
 import { getAllProjets } from '@/api/projet'; 
+// IMPORTANT : Change ce chemin selon où tu as mis ton URL (ex: 'http://10.0.2.2:3000')
+import { API_URL } from '@/api/url'; 
 
 const { width } = Dimensions.get('window');
 const numColumns = 2;
@@ -30,7 +32,6 @@ const CARD_WIDTH = width * 0.43;
 const CARD_HEIGHT = (CARD_WIDTH * 2) / 3;
 
 // --- TYPES ---
-// Type pour les données prêtes pour l'affichage (UI)
 type ProjectUI = {
     id: string;
     category: string;
@@ -41,7 +42,7 @@ type ProjectUI = {
     randomY: number;
 };
 
-// --- COMPOSANT CARTE (Inchangé) ---
+// --- COMPOSANT CARTE ---
 const NewsCard = ({ item }: { item: ProjectUI }) => {
     
     const [liked, setLiked] = useState(false);
@@ -72,7 +73,11 @@ const NewsCard = ({ item }: { item: ProjectUI }) => {
                 <Animated.View style={[styles.card, animatedStyle]}>
                     <View style={styles.topRow}>
                         <View style={styles.imageWrapper}>
-                            <Image source={{ uri: item.img }} style={styles.tinyImg} />
+                            <Image 
+                                source={{ uri: item.img }} 
+                                style={styles.tinyImg} 
+                                resizeMode="cover"
+                            />
                         </View>
                         <Pressable
                             onPress={() => {
@@ -110,23 +115,48 @@ export default function HomeScreen() {
 
     const fetchData = async () => {
         try {
-            // 1. Appel API
             const apiData = await getAllProjets();
             
-            // 2. Transformation (Mapping) des données API vers UI
-            // On ajoute ici les valeurs aléatoires pour qu'elles restent fixes une fois chargées
-            const formattedData: ProjectUI[] = apiData.map((item: any, index: number) => ({
-                id: item.id.toString(),
-                // Mapping des champs : API (français) -> UI (anglais)
-                category: item.categorie ? item.categorie.toUpperCase() : "PROJET", 
-                title: item.nom, 
-                description: item.description,
-                // Image par défaut si pas d'image, ou basée sur l'index pour varier
-                img: `https://picsum.photos/id/${(index % 50) + 150}/200/200`, 
-                // Génération des animations
-                randomRotate: (Math.random() - 0.5) * 1.5,
-                randomY: (Math.random() - 0.5) * 6,
-            }));
+           // Dans HomeScreen.tsx
+
+const formattedData: ProjectUI[] = apiData.map((item: any, index: number) => {
+    
+    // 1. Image par défaut (Lorem Picsum)
+    let finalImageUrl = `https://picsum.photos/id/${(index % 50) + 150}/200/200`;
+
+    // 2. Récupération des images du projet
+    // Sequelize renvoie souvent 'Images' (Majuscule) ou 'images' (minuscule) selon la config
+    const imagesDuProjet = item.Images || item.images || [];
+
+    if (imagesDuProjet.length > 0) {
+        // On prend la principale ou la première
+        const imageObj = imagesDuProjet.find((img: any) => img.isMain) || imagesDuProjet[0];
+        
+        if (imageObj && imageObj.url) {
+            // Si l'URL commence par 'http', c'est une image externe (CDN)
+            if (imageObj.url.startsWith('http')) {
+                finalImageUrl = imageObj.url;
+            } 
+            // Si l'URL est locale (ex: /images/projets/photo.png)
+            else {
+                // On retire le slash initial s'il y en a un en trop pour éviter le double //
+                const cleanPath = imageObj.url.startsWith('/') ? imageObj.url : `/${imageObj.url}`;
+                // Résultat : http://192.168.1.x:3000/images/projets/photo.png
+                finalImageUrl = `${API_URL}${cleanPath}`;
+            }
+        }
+    }
+
+    return {
+        id: item.id.toString(),
+        category: item.categorie ? item.categorie.toUpperCase() : "PROJET", 
+        title: item.nom, 
+        description: item.description,
+        img: finalImageUrl, 
+        randomRotate: (Math.random() - 0.5) * 1.5,
+        randomY: (Math.random() - 0.5) * 6,
+    };
+});
 
             setData(formattedData);
         } catch (error) {
@@ -137,12 +167,10 @@ export default function HomeScreen() {
         }
     };
 
-    // Chargement initial
     useEffect(() => {
         fetchData();
     }, []);
 
-    // Fonction pour le pull-to-refresh
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchData();
@@ -169,7 +197,6 @@ export default function HomeScreen() {
                         columnWrapperStyle={styles.columnWrapper}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => <NewsCard item={item} />}
-                        // Ajout du pull-to-refresh
                         refreshControl={
                             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#007d8f']} />
                         }
@@ -187,9 +214,8 @@ const styles = StyleSheet.create({
     headerUnderline: { width: 30, height: 4, backgroundColor: '#007d8f', marginTop: 4, borderRadius: 2 },
     scrollContent: { paddingBottom: 50, paddingHorizontal: 15 },
     columnWrapper: { justifyContent: 'space-between', marginBottom: 15 },
-    
     loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
+    
     // Shadow Wrapper
     shadowWrapper: {
         width: CARD_WIDTH,
@@ -214,6 +240,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#EBF0F3',
         overflow: 'hidden',
+        backgroundColor: '#FFF'
     },
     topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
     imageWrapper: {

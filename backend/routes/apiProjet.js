@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Projet = require('../models/Projet'); 
+const Projet = require('../models/Projet');
+// 👇 AJOUT 1 : Il faut importer le modèle Image pour faire la liaison
+const Image = require('../models/Image'); 
 const { Op } = require('sequelize');
 const { verifierChamps } = require('./utils');
 
@@ -42,11 +44,16 @@ router.post('/', async (req, res) => {
 });
 
 // ---------------------
-// Liste de tous les personnnes
+// Liste de tous les projets (AVEC IMAGES)
 // ---------------------
 router.get('/', async (req, res) => {
   try {
-    const projets = await Projet.findAll();
+    const projets = await Projet.findAll({
+        // 👇 AJOUT 2 : C'est ici qu'on inclut les images de force
+        include: Image 
+        // Si tu avais défini un alias dans tes modèles (ex: as: 'illustrations'), 
+        // il faudrait mettre : include: { model: Image, as: 'illustrations' }
+    });
     res.json(projets);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -61,7 +68,9 @@ router.get('/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ message: 'ID invalide' });
 
-    const projet = await Projet.findByPk(id);
+    // Tu peux aussi le faire ici si tu veux voir les images dans le détail d'un projet
+    const projet = await Projet.findByPk(id, { include: Image }); 
+    
     if (!projet) return res.status(404).json({ message: 'Projet non trouvé' });
 
     res.json(projet);
@@ -143,8 +152,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-
-
 
 module.exports = router;

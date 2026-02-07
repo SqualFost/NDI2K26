@@ -18,7 +18,7 @@ const apiProjetRouter = require('./routes/apiProjet');
 const apiImageRouter = require('./routes/apiImage');
 
 const app = express();
-
+app.use(express.static('public'));
 // --- 2. FONCTION D'INITIALISATION BDD (Création de la base si inexistante) ---
 async function initializeDatabase() {
   const connection = await mysql.createConnection({
