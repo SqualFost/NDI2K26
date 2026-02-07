@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Dimensions, Image, Pressable, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Dimensions, 
+  Image, 
+  Pressable, 
+  Platform, 
+  ActivityIndicator, 
+  RefreshControl 
+} from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -12,22 +21,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
+// Assure-toi que ce chemin est bon
+import { getAllProjets } from '@/api/projet'; 
+
 const { width } = Dimensions.get('window');
 const numColumns = 2;
 const CARD_WIDTH = width * 0.43;
 const CARD_HEIGHT = (CARD_WIDTH * 2) / 3;
 
-const DATA = Array.from({ length: 14 }).map((_, i) => ({
-    id: `${i}`,
-    category: "ACTUALITÉ",
-    title: `Article #${i + 1}`,
-    description: "Détails de l'actualité locale et des initiatives régionales.",
-    img: `https://picsum.photos/id/${i + 165}/200/200`,
-    randomRotate: (Math.random() - 0.5) * 1.5,
-    randomY: (Math.random() - 0.5) * 6,
-}));
+// --- TYPES ---
+// Type pour les données prêtes pour l'affichage (UI)
+type ProjectUI = {
+    id: string;
+    category: string;
+    title: string;
+    description: string;
+    img: string;
+    randomRotate: number;
+    randomY: number;
+};
 
-const NewsCard = ({ item }: { item: any }) => {
+// --- COMPOSANT CARTE (Inchangé) ---
+const NewsCard = ({ item }: { item: ProjectUI }) => {
+    
     const [liked, setLiked] = useState(false);
     const heartScale = useSharedValue(1);
 
@@ -52,9 +68,6 @@ const NewsCard = ({ item }: { item: any }) => {
 
     return (
         <TapGestureHandler onHandlerStateChange={onDoubleTap} numberOfTaps={2}>
-            {/* CONSEIL : On met l'ombre sur un View statique et l'animation sur un View enfant
-        pour éviter les bugs de rendu Reanimated/Shadow
-      */}
             <View style={styles.shadowWrapper}>
                 <Animated.View style={[styles.card, animatedStyle]}>
                     <View style={styles.topRow}>
@@ -89,7 +102,52 @@ const NewsCard = ({ item }: { item: any }) => {
     );
 };
 
+// --- ECRAN PRINCIPAL ---
 export default function HomeScreen() {
+    const [data, setData] = useState<ProjectUI[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchData = async () => {
+        try {
+            // 1. Appel API
+            const apiData = await getAllProjets();
+            
+            // 2. Transformation (Mapping) des données API vers UI
+            // On ajoute ici les valeurs aléatoires pour qu'elles restent fixes une fois chargées
+            const formattedData: ProjectUI[] = apiData.map((item: any, index: number) => ({
+                id: item.id.toString(),
+                // Mapping des champs : API (français) -> UI (anglais)
+                category: item.categorie ? item.categorie.toUpperCase() : "PROJET", 
+                title: item.nom, 
+                description: item.description,
+                // Image par défaut si pas d'image, ou basée sur l'index pour varier
+                img: `https://picsum.photos/id/${(index % 50) + 150}/200/200`, 
+                // Génération des animations
+                randomRotate: (Math.random() - 0.5) * 1.5,
+                randomY: (Math.random() - 0.5) * 6,
+            }));
+
+            setData(formattedData);
+        } catch (error) {
+            console.error("Erreur chargement home:", error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    // Chargement initial
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    // Fonction pour le pull-to-refresh
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        fetchData();
+    }, []);
+
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <ThemedView style={styles.container}>
@@ -98,15 +156,25 @@ export default function HomeScreen() {
                     <View style={styles.headerUnderline} />
                 </View>
 
-                <Animated.FlatList
-                    data={DATA}
-                    numColumns={numColumns}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.scrollContent}
-                    columnWrapperStyle={styles.columnWrapper}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => <NewsCard item={item} />}
-                />
+                {loading ? (
+                    <View style={styles.loaderContainer}>
+                        <ActivityIndicator size="large" color="#007d8f" />
+                    </View>
+                ) : (
+                    <Animated.FlatList
+                        data={data}
+                        numColumns={numColumns}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={styles.scrollContent}
+                        columnWrapperStyle={styles.columnWrapper}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({ item }) => <NewsCard item={item} />}
+                        // Ajout du pull-to-refresh
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#007d8f']} />
+                        }
+                    />
+                )}
             </ThemedView>
         </GestureHandlerRootView>
     );
@@ -119,8 +187,10 @@ const styles = StyleSheet.create({
     headerUnderline: { width: 30, height: 4, backgroundColor: '#007d8f', marginTop: 4, borderRadius: 2 },
     scrollContent: { paddingBottom: 50, paddingHorizontal: 15 },
     columnWrapper: { justifyContent: 'space-between', marginBottom: 15 },
+    
+    loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-    // ✅ SOLUTION AU BUG : Wrapper statique pour l'ombre
+    // Shadow Wrapper
     shadowWrapper: {
         width: CARD_WIDTH,
         ...Platform.select({
@@ -141,7 +211,6 @@ const styles = StyleSheet.create({
         height: CARD_HEIGHT + 20,
         borderRadius: 16,
         padding: 12,
-        // ✅ On privilégie la bordure pour la structure, l'ombre est dans le wrapper
         borderWidth: 1,
         borderColor: '#EBF0F3',
         overflow: 'hidden',
