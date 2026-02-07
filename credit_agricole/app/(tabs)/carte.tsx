@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,30 +17,34 @@ import { Region } from 'react-native-maps';
 
 // Import du composant carte
 import { MapComp, Project } from '@/components/carte_comp';
+import { getAllProjets } from '@/api/projet';
 
 // --- DONNÉES ---
-const PROJECTS: Project[] = [
-  { id: '1', name: 'Refroidissement', budget: '12k€', desc: 'Toits végétalisés Mairie.', category: 'Ecologie', lat: 43.7034, lng: 7.2663 },
-  { id: '2', name: 'Handi-Sport 2026', budget: '8k€', desc: 'Fauteuils roulants Port.', category: 'Sport', lat: 43.6950, lng: 7.2800 },
-  { id: '3', name: 'Rucher Partagé', budget: '3k€', desc: 'Ruches Gare Thiers.', category: 'Ecologie', lat: 43.7050, lng: 7.2620 },
-  { id: '4', name: 'Potager Solidaire', budget: '4.5k€', desc: 'Jardins partagés Aéroport.', category: 'Social', lat: 43.6650, lng: 7.2050 },
-  { id: '5', name: 'Piste Cyclable', budget: '25k€', desc: 'Promenade des Anglais.', category: 'Transport', lat: 43.6900, lng: 7.2400 },
-  { id: '6', name: 'Atelier Numérique', budget: '2k€', desc: 'Cours séniors Cimiez.', category: 'Social', lat: 43.7200, lng: 7.2750 },
-  { id: '7', name: 'Nettoyage Plage', budget: '1.5k€', desc: 'Journée citoyenne Cannes.', category: 'Ecologie', lat: 43.5528, lng: 7.0174 },
-];
+
 
 const CATEGORIES = ['Tous', 'Ecologie', 'Social', 'Sport', 'Transport'];
 
 export default function HomeScreen() {
   // États
+  const [projects, setProjects] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [showFilters, setShowFilters] = useState(false);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
 
+  const fetchProjects = async () => {
+    const rep = await getAllProjets();
+    setProjects(rep);
+  }
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+
   // --- FILTRAGE POUR LA CARTE (Texte + Catégorie uniquement) ---
   const mapMarkers = useMemo(() => {
-    return PROJECTS.filter((item) => {
+    return projects.filter((item) => {
       const matchesText = item.name.toLowerCase().includes(searchText.toLowerCase()) ||
           item.desc.toLowerCase().includes(searchText.toLowerCase());
       const matchesCategory = selectedCategory === 'Tous' || item.category === selectedCategory;
