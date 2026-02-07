@@ -1,12 +1,8 @@
 import React from 'react';
 
-import { DynamicColorIOS} from "react-native";
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs'
+import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
       <NativeTabs
       tintColor={'#009b9d'}

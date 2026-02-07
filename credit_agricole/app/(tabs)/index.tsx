@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
+import { Props } from '@/constants/data';
 
 export default function CreateProject() {
   const [step, setStep] = useState(1);
@@ -167,7 +167,7 @@ export default function CreateProject() {
 }
 
 // Petit composant interne pour les labels
-const Label = ({ icon, text }) => (
+const Label = ({ icon, text } : Props) => (
     <View style={styles.labelRow}>
       <Ionicons name={icon} size={18} color="#4e8076" style={{ marginRight: 8 }} />
       <Text style={styles.label}>{text}</Text>

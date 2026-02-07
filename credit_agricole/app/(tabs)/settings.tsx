@@ -1,12 +1,14 @@
 import React from 'react';
+
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SettingsProps } from '@/constants/data';
 
 export default function Settings() {
   const [isBiometric, setIsBiometric] = React.useState(true);
   const [isNotifications, setIsNotifications] = React.useState(true);
 
-  const SettingItem = ({ icon, label, onPress, color = "#4e8076", rightElement = null }) => (
+  const SettingItem = ({ icon, label, onPress, color = "#4e8076", rightElement = null } : SettingsProps) => (
       <TouchableOpacity style={styles.item} onPress={onPress}>
         <View style={styles.itemLeft}>
           <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
