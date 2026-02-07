@@ -45,8 +45,8 @@ export default function HomeScreen() {
   // --- FILTRAGE POUR LA CARTE (Texte + Catégorie uniquement) ---
   const mapMarkers = useMemo(() => {
     return projects.filter((item) => {
-      const matchesText = item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.desc.toLowerCase().includes(searchText.toLowerCase());
+      const matchesText = item.nom.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchText.toLowerCase());
       const matchesCategory = selectedCategory === 'Tous' || item.category === selectedCategory;
       return matchesText && matchesCategory;
     });
@@ -66,10 +66,10 @@ export default function HomeScreen() {
 
       // On garde si le projet est dans l'écran
       return (
-          item.lat >= minLat &&
-          item.lat <= maxLat &&
-          item.lng >= minLng &&
-          item.lng <= maxLng
+          item.latitude >= minLat &&
+          item.latitude <= maxLat &&
+          item.longitude >= minLng &&
+          item.longitude <= maxLng
       );
     });
   }, [mapMarkers, currentRegion]);
@@ -80,7 +80,7 @@ export default function HomeScreen() {
 
   // Gestion Clic
   const handleMarkerPress = (project: Project) => {
-    Alert.alert(project.name, `${project.desc}\nBudget: ${project.budget}`);
+    Alert.alert(project.nom, `${project.description}\nBudget: ${project.budget}`);
   };
 
   // Rendu Liste
@@ -90,14 +90,14 @@ export default function HomeScreen() {
           <Ionicons name="image-outline" size={24} color="#4e8076" />
         </View>
         <View style={styles.cardInfo}>
-          <Text style={styles.projectName}>{item.name}</Text>
+          <Text style={styles.projectName}>{item.nom}</Text>
           <View style={styles.budgetRow}>
             <Text style={styles.projectBudget}>{item.budget}</Text>
             <View style={styles.smallBadge}>
               <Text style={styles.smallBadgeText}>{item.category}</Text>
             </View>
           </View>
-          <Text style={styles.projectDesc} numberOfLines={2}>{item.desc}</Text>
+          <Text style={styles.projectDesc} numberOfLines={2}>{item.description}</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color="#CCC" />
       </TouchableOpacity>
