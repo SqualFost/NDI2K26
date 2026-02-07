@@ -32,7 +32,6 @@ async function initializeDatabase() {
 }
 
 // --- 3. FONCTION DE REMPLISSAGE (SEED) ---
-// --- 3. FONCTION DE REMPLISSAGE (SEED) ---
 async function seedDatabase() {
   try {
     console.log("🌱 Vérification des données initiales...");
