@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SettingsProps } from '@/constants/data';
+import { router } from 'expo-router';
 
 export default function Settings() {
   const [isBiometric, setIsBiometric] = React.useState(true);
@@ -77,7 +78,11 @@ export default function Settings() {
         </View>
 
         {/* BOUTON DÉCONNEXION */}
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton}
+        onPress={()=>{
+          router.push("/(auth)/login");
+        }}
+        >
           <Ionicons name="log-out-outline" size={20} color="#d54640" />
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
