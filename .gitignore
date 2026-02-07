@@ -651,3 +651,5 @@ modules.xml
 *.ipr
 
 # End of https://www.toptal.com/developers/gitignore/api/reactnative,react,node,intellij,webstorm,webstorm+all,webstorm+iml
+backend/swagger-output.json
+/backend/public/images
