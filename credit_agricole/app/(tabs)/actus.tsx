@@ -24,12 +24,13 @@ import { ThemedView } from '@/components/themed-view';
 // 1. IMPORTS API
 import { getAllProjets } from '@/api/projet'; 
 // IMPORTANT : Change ce chemin selon où tu as mis ton URL (ex: 'http://10.0.2.2:3000')
-import { API_URL } from '@/api/url'; 
+import { API_URL, BASE_URL } from '@/api/url'; 
 
 const { width } = Dimensions.get('window');
 const numColumns = 2;
 const CARD_WIDTH = width * 0.43;
-const CARD_HEIGHT = (CARD_WIDTH * 2) / 3;
+// On augmente la hauteur (ex: 0.65 fois la largeur de l'écran ou un ratio plus grand)
+const CARD_HEIGHT = width * 0.6;
 
 // --- TYPES ---
 type ProjectUI = {
@@ -56,7 +57,7 @@ const NewsCard = ({ item }: { item: ProjectUI }) => {
     };
 
     const animatedStyle = useAnimatedStyle(() => ({
-        backgroundColor: withTiming(liked ? '#BFE7E8' : '#ffffff'),
+        // On retire le changement de couleur de fond car l'image prend toute la place
         transform: [
             { rotate: `${item.randomRotate}deg` },
             { translateY: item.randomY }
@@ -71,42 +72,45 @@ const NewsCard = ({ item }: { item: ProjectUI }) => {
         <TapGestureHandler onHandlerStateChange={onDoubleTap} numberOfTaps={2}>
             <View style={styles.shadowWrapper}>
                 <Animated.View style={[styles.card, animatedStyle]}>
-                    <View style={styles.topRow}>
-                        <View style={styles.imageWrapper}>
-                            <Image 
-                                source={{ uri: item.img }} 
-                                style={styles.tinyImg} 
-                                resizeMode="cover"
-                            />
-                        </View>
+                    
+                    {/* 1. GRANDE IMAGE (Prend le haut de la carte) */}
+                    <View style={styles.imageContainer}>
+                        <Image 
+                            source={{ uri: item.img }} 
+                            style={styles.cardImage} 
+                            resizeMode="cover"
+                        />
+                        {/* Coeur en superposition */}
                         <Pressable
                             onPress={() => {
                                 setLiked(!liked);
                                 heartScale.value = withSequence(withSpring(1.3), withSpring(1));
                             }}
-                            style={styles.heartCircle}
+                            style={styles.heartOverlay}
                         >
                             <Animated.View style={heartAnimatedStyle}>
                                 <Ionicons
                                     name={liked ? "heart" : "heart-outline"}
-                                    size={16}
-                                    color={liked ? "#007d8f" : "#999"}
+                                    size={20}
+                                    color={liked ? "#FF4D4D" : "#FFF"} // Rouge si liké, Blanc sinon
                                 />
                             </Animated.View>
                         </Pressable>
                     </View>
 
+                    {/* 2. INFOS (En dessous) */}
                     <View style={styles.infoContainer}>
                         <ThemedText style={styles.categoryText}>{item.category}</ThemedText>
-                        <ThemedText style={styles.productTitle} numberOfLines={1}>{item.title}</ThemedText>
-                        <ThemedText style={styles.productDesc} numberOfLines={2}>{item.description}</ThemedText>
+                        <ThemedText style={styles.productTitle} numberOfLines={2}>{item.title}</ThemedText>
+                        {/* On affiche la description seulement s'il reste de la place, ou on l'enlève pour épuré */}
+                        <ThemedText style={styles.productDesc} numberOfLines={1}>{item.description}</ThemedText>
                     </View>
+
                 </Animated.View>
             </View>
         </TapGestureHandler>
     );
 };
-
 // --- ECRAN PRINCIPAL ---
 export default function HomeScreen() {
     const [data, setData] = useState<ProjectUI[]>([]);
@@ -138,11 +142,11 @@ const formattedData: ProjectUI[] = apiData.map((item: any, index: number) => {
                 finalImageUrl = imageObj.url;
             } 
             // Si l'URL est locale (ex: /images/projets/photo.png)
-            else {
-                // On retire le slash initial s'il y en a un en trop pour éviter le double //
+           else {
                 const cleanPath = imageObj.url.startsWith('/') ? imageObj.url : `/${imageObj.url}`;
-                // Résultat : http://192.168.1.x:3000/images/projets/photo.png
-                finalImageUrl = `${API_URL}${cleanPath}`;
+                
+                // CORRECTION ICI : On utilise BASE_URL au lieu de API_URL
+                finalImageUrl = `${BASE_URL}${cleanPath}`;
             }
         }
     }
@@ -206,63 +210,87 @@ const formattedData: ProjectUI[] = apiData.map((item: any, index: number) => {
         </GestureHandlerRootView>
     );
 }
-
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F4F7F9', paddingTop: 40 },
     header: { paddingHorizontal: 20, marginBottom: 20, marginTop: 10 },
     mainTitle: { fontSize: 28, fontWeight: '800', color: '#1A1A1A', letterSpacing: -0.5 },
     headerUnderline: { width: 30, height: 4, backgroundColor: '#007d8f', marginTop: 4, borderRadius: 2 },
-    scrollContent: { paddingBottom: 50, paddingHorizontal: 15 },
-    columnWrapper: { justifyContent: 'space-between', marginBottom: 15 },
+    
     loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     
-    // Shadow Wrapper
+    scrollContent: { paddingBottom: 50, paddingHorizontal: 15 },
+    columnWrapper: { justifyContent: 'space-between', marginBottom: 25 }, // Plus d'espace vertical entre les cartes
+
     shadowWrapper: {
         width: CARD_WIDTH,
         ...Platform.select({
             ios: {
                 shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 5,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
             },
             android: {
-                elevation: 3,
+                elevation: 5,
             },
         }),
     },
 
     card: {
         width: '100%',
-        height: CARD_HEIGHT + 20,
-        borderRadius: 16,
-        padding: 12,
+        height: CARD_HEIGHT,
+        borderRadius: 20, // Plus arrondi
+        backgroundColor: '#FFF',
+        overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#EBF0F3',
-        overflow: 'hidden',
-        backgroundColor: '#FFF'
     },
-    topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-    imageWrapper: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        backgroundColor: '#F0F4F8',
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: '#E1E8ED'
+
+    // --- NOUVEAUX STYLES IMAGE ---
+    imageContainer: {
+        width: '100%',
+        height: '65%', // L'image prend 65% de la hauteur de la carte
+        position: 'relative',
     },
-    tinyImg: { width: '100%', height: '100%' },
-    heartCircle: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: '#F8FAFB',
+    cardImage: {
+        width: '100%',
+        height: '100%',
+    },
+    heartOverlay: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'rgba(0,0,0,0.3)', // Fond semi-transparent pour voir le coeur sur n'importe quelle image
         justifyContent: 'center',
         alignItems: 'center',
     },
-    infoContainer: { flex: 1 },
-    categoryText: { fontSize: 8, fontWeight: '800', color: '#007d8f', marginBottom: 4 },
-    productTitle: { fontSize: 12, fontWeight: '700', color: '#1A1A1A' },
-    productDesc: { fontSize: 10, color: '#7C878E', marginTop: 2, lineHeight: 14 },
+
+    // --- STYLES INFO ---
+    infoContainer: { 
+        flex: 1, 
+        padding: 12, 
+        justifyContent: 'center' 
+    },
+    categoryText: { 
+        fontSize: 10, 
+        fontWeight: '800', 
+        color: '#007d8f', 
+        marginBottom: 4,
+        textTransform: 'uppercase'
+    },
+    productTitle: { 
+        fontSize: 14, 
+        fontWeight: '700', 
+        color: '#1A1A1A',
+        lineHeight: 18,
+        marginBottom: 4
+    },
+    productDesc: { 
+        fontSize: 11, 
+        color: '#7C878E', 
+        lineHeight: 14 
+    },
 });
