@@ -32,47 +32,52 @@ async function initializeDatabase() {
 }
 
 // --- 3. FONCTION DE REMPLISSAGE (SEED) ---
+// --- 3. FONCTION DE REMPLISSAGE (SEED) ---
 async function seedDatabase() {
   try {
     console.log("🌱 Vérification des données initiales...");
 
-    // 1. UTILISATEURS
+    // 1. UTILISATEURS (Sièges sociaux répartis 83/06/04)
     const utilisateurs = [
       { id: 1, nom: 'Admin', prenom: 'Fondation CA', adresse: 'Draguignan', dob: '1990-01-01', mot_de_passe: 'admin2025', role: 'ADMIN' },
-      { id: 2, nom: 'Assoc', prenom: 'Chant des Dauphins', adresse: 'Port-Fréjus', dob: '2000-06-15', mot_de_passe: 'mer83', role: 'USER' },
-      { id: 3, nom: 'Assoc', prenom: 'Recyclerie Gare', adresse: 'Hyères', dob: '2015-03-10', mot_de_passe: 'velo83', role: 'USER' },
-      { id: 4, nom: 'Assoc', prenom: 'AVATH', adresse: 'Toulon', dob: '1998-09-22', mot_de_passe: 'miam83', role: 'USER' },
-      { id: 5, nom: 'Musée', prenom: 'Dinosaures', adresse: 'Fox-Amphoux', dob: '2025-06-07', mot_de_passe: 'raptor83', role: 'USER' }
+      { id: 2, nom: 'Assoc', prenom: 'Chant des Dauphins', adresse: 'Port-Fréjus', dob: '2000-06-15', mot_de_passe: 'mer83', role: 'USER' }, // 83
+      { id: 3, nom: 'Assoc', prenom: 'Recyclerie Gare', adresse: 'Manosque', dob: '2015-03-10', mot_de_passe: 'velo04', role: 'USER' }, // 04
+      { id: 4, nom: 'Assoc', prenom: 'AVATH', adresse: 'Toulon', dob: '1998-09-22', mot_de_passe: 'miam83', role: 'USER' }, // 83
+      { id: 5, nom: 'Musée', prenom: 'Dinosaures', adresse: 'Nice', dob: '2025-06-07', mot_de_passe: 'raptor06', role: 'USER' } // 06
     ];
-    // ignoreDuplicates: true évite de planter si l'ID 1 existe déjà
     await db.Utilisateur.bulkCreate(utilisateurs, { ignoreDuplicates: true });
 
-    // 2. PROJETS
+    // 2. PROJETS (Uniquement 83, 06, 04)
     const projets = [
-      { id: 1, nom: 'Voile Bonheur', longitude: 6.733, latitude: 43.433, description: 'Sorties en mer pour public handicapé (autisme) à la rencontre des dauphins.', utilisateur_id: 2, date_debut: '2025-05-01', budget: 5000, categorie: 'Social', localisation: 'Port-Fréjus' },
-      { id: 2, nom: 'Atelier Vélo Solidaire', longitude: 5.435, latitude: 43.124, description: 'Équipement pour réparation de vélos et formation de salariés en insertion.', utilisateur_id: 3, date_debut: '2025-02-15', budget: 2500, categorie: 'Environnement', localisation: 'Hyères' },
-      { id: 3, nom: 'Comptoir Bistrot Chalucet', longitude: 5.927, latitude: 43.124, description: 'Restauration solidaire et inclusive pour lutter contre la précarité alimentaire.', utilisateur_id: 4, date_debut: '2025-10-01', budget: 3200, categorie: 'Social', localisation: 'Toulon' },
-      { id: 4, nom: 'Musée Dinosaures', longitude: 6.100, latitude: 43.580, description: 'Ouverture du musée sur site paléontologique majeur.', utilisateur_id: 5, date_debut: '2025-06-07', budget: 7000, categorie: 'Culture', localisation: 'Fox-Amphoux' },
-      { id: 5, nom: 'Randonnée Éco-Trail', longitude: 6.146, latitude: 43.610, description: 'Organisation de randonnées guidées pour sensibiliser à l’écologie.', utilisateur_id: 2, date_debut: '2025-03-12', budget: 1800, categorie: 'Environnement', localisation: 'Marseille' },
-      { id: 6, nom: 'Jardin Partagé Toulonnais', longitude: 5.930, latitude: 43.125, description: 'Création d’un jardin partagé pour les habitants de Toulon.', utilisateur_id: 4, date_debut: '2025-04-20', budget: 1200, categorie: 'Social', localisation: 'Toulon' },
-      { id: 7, nom: 'Atelier Peinture Nice', longitude: 7.260, latitude: 43.710, description: 'Cours de peinture inclusifs pour enfants et adultes.', utilisateur_id: 3, date_debut: '2025-06-05', budget: 2000, categorie: 'Culture', localisation: 'Nice' },
-      { id: 8, nom: 'Nettoyage Plage Cannes', longitude: 7.010, latitude: 43.552, description: 'Mobilisation citoyenne pour nettoyer les plages de Cannes.', utilisateur_id: 2, date_debut: '2025-07-10', budget: 1500, categorie: 'Environnement', localisation: 'Cannes' },
-      { id: 9, nom: 'Bistrot Solidaire Marseille', longitude: 5.370, latitude: 43.300, description: 'Repas gratuits et activités pour les personnes précaires.', utilisateur_id: 4, date_debut: '2025-08-15', budget: 3500, categorie: 'Social', localisation: 'Marseille' },
-      { id: 10, nom: 'Musée du Patrimoine Menton', longitude: 7.500, latitude: 43.780, description: 'Expositions temporaires pour valoriser le patrimoine local.', utilisateur_id: 5, date_debut: '2025-05-30', budget: 6000, categorie: 'Culture', localisation: 'Menton' },
-      { id: 11, nom: 'Atelier Cirque Saint-Raphaël', longitude: 6.740, latitude: 43.430, description: 'Cours de cirque pour enfants et adolescents.', utilisateur_id: 3, date_debut: '2025-09-01', budget: 2200, categorie: 'Culture', localisation: 'Saint-Raphaël' },
-      { id: 12, nom: 'Festival du Livre Hyères', longitude: 6.140, latitude: 43.120, description: 'Organisation d’un festival du livre et d’ateliers d’écriture.', utilisateur_id: 3, date_debut: '2025-10-12', budget: 3000, categorie: 'Culture', localisation: 'Hyères' },
-      { id: 13, nom: 'Randonnée Seniors Provence', longitude: 6.050, latitude: 43.220, description: 'Activités de plein air pour les seniors.', utilisateur_id: 2, date_debut: '2025-03-20', budget: 1000, categorie: 'Social', localisation: 'Draguignan' },
-      { id: 14, nom: 'Éco-Cyclo Nice', longitude: 7.280, latitude: 43.710, description: 'Ateliers de réparation de vélos pour promouvoir la mobilité durable.', utilisateur_id: 3, date_debut: '2025-04-18', budget: 1800, categorie: 'Environnement', localisation: 'Nice' },
-      { id: 15, nom: 'Théâtre Inclusif Marseille', longitude: 5.370, latitude: 43.295, description: 'Cours de théâtre pour personnes en situation de handicap.', utilisateur_id: 4, date_debut: '2025-06-25', budget: 2500, categorie: 'Culture', localisation: 'Marseille' },
-      { id: 16, nom: 'Atelier Cuisine Solidaire Toulon', longitude: 5.930, latitude: 43.125, description: 'Cours de cuisine pour apprendre à cuisiner avec peu de ressources.', utilisateur_id: 4, date_debut: '2025-05-10', budget: 2000, categorie: 'Social', localisation: 'Toulon' },
-      { id: 17, nom: 'Observatoire des Oiseaux Camargue', longitude: 4.650, latitude: 43.550, description: 'Activités d’observation et protection des oiseaux.', utilisateur_id: 2, date_debut: '2025-07-05', budget: 2200, categorie: 'Environnement', localisation: 'Camargue' },
-      { id: 18, nom: 'Festival Jazz Nice', longitude: 7.270, latitude: 43.705, description: 'Organisation d’un festival de jazz et concerts gratuits.', utilisateur_id: 5, date_debut: '2025-08-20', budget: 4000, categorie: 'Culture', localisation: 'Nice' },
-      { id: 19, nom: 'Nettoyage Parc National Esterel', longitude: 6.780, latitude: 43.420, description: 'Opération de nettoyage et sensibilisation écologique.', utilisateur_id: 2, date_debut: '2025-09-10', budget: 1300, categorie: 'Environnement', localisation: 'Fréjus' },
-      { id: 20, nom: 'Club Lecture Hyères', longitude: 6.140, latitude: 43.120, description: 'Club de lecture pour adolescents et jeunes adultes.', utilisateur_id: 3, date_debut: '2025-10-01', budget: 900, categorie: 'Culture', localisation: 'Hyères' },
-      { id: 21, nom: 'Récup’ Vélos Marseille', longitude: 5.370, latitude: 43.300, description: 'Collecte et réparation de vélos pour les étudiants et familles.', utilisateur_id: 3, date_debut: '2025-03-15', budget: 2000, categorie: 'Environnement', localisation: 'Marseille' },
-      { id: 22, nom: 'Danse Inclusive Cannes', longitude: 7.010, latitude: 43.552, description: 'Cours de danse pour tous publics, incluant personnes handicapées.', utilisateur_id: 4, date_debut: '2025-05-12', budget: 1800, categorie: 'Culture', localisation: 'Cannes' },
-      { id: 23, nom: 'Bibliothèque Mobile Provence', longitude: 6.050, latitude: 43.220, description: 'Création d’une bibliothèque mobile pour les zones rurales.', utilisateur_id: 5, date_debut: '2025-06-08', budget: 2500, categorie: 'Culture', localisation: 'Draguignan' },
-      { id: 24, nom: 'Atelier Jardinage Menton', longitude: 7.500, latitude: 43.780, description: 'Cours de jardinage pour enfants et familles.', utilisateur_id: 2, date_debut: '2025-07-15', budget: 1500, categorie: 'Environnement', localisation: 'Menton' }
+      // --- VAR (83) ---
+      { id: 1, nom: 'Voile Bonheur', longitude: 6.733, latitude: 43.433, description: 'Sorties en mer pour public handicapé.', utilisateur_id: 2, date_debut: '2025-05-01', budget: 5000, categorie: 'Social', localisation: 'Port-Fréjus' },
+      { id: 2, nom: 'Atelier Vélo Solidaire', longitude: 6.128, latitude: 43.120, description: 'Réparation de vélos et insertion.', utilisateur_id: 3, date_debut: '2025-02-15', budget: 2500, categorie: 'Environnement', localisation: 'Hyères' },
+      { id: 3, nom: 'Comptoir Bistrot Chalucet', longitude: 5.927, latitude: 43.124, description: 'Restauration solidaire inclusive.', utilisateur_id: 4, date_debut: '2025-10-01', budget: 3200, categorie: 'Social', localisation: 'Toulon' },
+      { id: 4, nom: 'Musée Dinosaures', longitude: 6.100, latitude: 43.580, description: 'Musée sur site paléontologique.', utilisateur_id: 5, date_debut: '2025-06-07', budget: 7000, categorie: 'Culture', localisation: 'Fox-Amphoux' },
+      { id: 6, nom: 'Jardin Partagé Toulonnais', longitude: 5.930, latitude: 43.125, description: 'Jardin partagé urbain.', utilisateur_id: 4, date_debut: '2025-04-20', budget: 1200, categorie: 'Social', localisation: 'Toulon' },
+      { id: 11, nom: 'Atelier Cirque St-Raphaël', longitude: 6.768, latitude: 43.425, description: 'Cirque pour adolescents.', utilisateur_id: 3, date_debut: '2025-09-01', budget: 2200, categorie: 'Culture', localisation: 'Saint-Raphaël' },
+      { id: 12, nom: 'Festival du Livre', longitude: 6.130, latitude: 43.121, description: 'Festival et ateliers écriture.', utilisateur_id: 3, date_debut: '2025-10-12', budget: 3000, categorie: 'Culture', localisation: 'Hyères' },
+      { id: 13, nom: 'Randonnée Seniors', longitude: 6.463, latitude: 43.540, description: 'Activités plein air seniors.', utilisateur_id: 2, date_debut: '2025-03-20', budget: 1000, categorie: 'Social', localisation: 'Draguignan' },
+      { id: 16, nom: 'Cuisine Solidaire', longitude: 5.935, latitude: 43.122, description: 'Apprendre à cuisiner sain.', utilisateur_id: 4, date_debut: '2025-05-10', budget: 2000, categorie: 'Social', localisation: 'Toulon' },
+      { id: 17, nom: 'Observatoire Oiseaux', longitude: 6.180, latitude: 43.100, description: 'Protection nature aux Salins.', utilisateur_id: 2, date_debut: '2025-07-05', budget: 2200, categorie: 'Environnement', localisation: 'Hyères (Salins)' },
+      { id: 19, nom: 'Nettoyage Esterel', longitude: 6.800, latitude: 43.450, description: 'Nettoyage massif du massif.', utilisateur_id: 2, date_debut: '2025-09-10', budget: 1300, categorie: 'Environnement', localisation: 'Fréjus (Esterel)' },
+      { id: 20, nom: 'Club Lecture', longitude: 6.135, latitude: 43.118, description: 'Lecture jeunes adultes.', utilisateur_id: 3, date_debut: '2025-10-01', budget: 900, categorie: 'Culture', localisation: 'Hyères' },
+      { id: 23, nom: 'Bibliothèque Mobile', longitude: 6.470, latitude: 43.535, description: 'Culture en zone rurale.', utilisateur_id: 5, date_debut: '2025-06-08', budget: 2500, categorie: 'Culture', localisation: 'Draguignan' },
+
+      // --- ALPES-MARITIMES (06) ---
+      { id: 7, nom: 'Atelier Peinture Nice', longitude: 7.262, latitude: 43.703, description: 'Art inclusif pour tous.', utilisateur_id: 3, date_debut: '2025-06-05', budget: 2000, categorie: 'Culture', localisation: 'Nice' },
+      { id: 8, nom: 'Nettoyage Plage', longitude: 7.017, latitude: 43.551, description: 'Action citoyenne plages.', utilisateur_id: 2, date_debut: '2025-07-10', budget: 1500, categorie: 'Environnement', localisation: 'Cannes' },
+      { id: 10, nom: 'Patrimoine Menton', longitude: 7.500, latitude: 43.775, description: 'Valorisation du patrimoine.', utilisateur_id: 5, date_debut: '2025-05-30', budget: 6000, categorie: 'Culture', localisation: 'Menton' },
+      { id: 14, nom: 'Éco-Cyclo Nice', longitude: 7.265, latitude: 43.710, description: 'Mobilité douce urbaine.', utilisateur_id: 3, date_debut: '2025-04-18', budget: 1800, categorie: 'Environnement', localisation: 'Nice' },
+      { id: 18, nom: 'Festival Jazz Off', longitude: 7.270, latitude: 43.695, description: 'Concerts gratuits quartiers.', utilisateur_id: 5, date_debut: '2025-08-20', budget: 4000, categorie: 'Culture', localisation: 'Nice' },
+      { id: 22, nom: 'Danse Inclusive', longitude: 7.020, latitude: 43.555, description: 'Danse mixte handi-valide.', utilisateur_id: 4, date_debut: '2025-05-12', budget: 1800, categorie: 'Culture', localisation: 'Cannes' },
+      { id: 24, nom: 'Jardinage Enfants', longitude: 7.495, latitude: 43.780, description: 'Nature en ville.', utilisateur_id: 2, date_debut: '2025-07-15', budget: 1500, categorie: 'Environnement', localisation: 'Menton' },
+
+      // --- ALPES-DE-HAUTE-PROVENCE (04) ---
+      { id: 5, nom: 'Randonnée Verdon', longitude: 6.512, latitude: 43.846, description: 'Eco-tourisme dans les Gorges.', utilisateur_id: 2, date_debut: '2025-03-12', budget: 1800, categorie: 'Environnement', localisation: 'Castellane' },
+      { id: 9, nom: 'Bistrot des Alpes', longitude: 6.235, latitude: 44.092, description: 'Repas solidaires chauds.', utilisateur_id: 4, date_debut: '2025-08-15', budget: 3500, categorie: 'Social', localisation: 'Digne-les-Bains' },
+      { id: 15, nom: 'Théâtre Manosquin', longitude: 5.783, latitude: 43.833, description: 'Théâtre pour tous.', utilisateur_id: 4, date_debut: '2025-06-25', budget: 2500, categorie: 'Culture', localisation: 'Manosque' },
+      { id: 21, nom: 'Récup’ Vélos 04', longitude: 5.943, latitude: 44.197, description: 'Mobilité rurale durable.', utilisateur_id: 3, date_debut: '2025-03-15', budget: 2000, categorie: 'Environnement', localisation: 'Sisteron' },
     ];
     await db.Projet.bulkCreate(projets, { ignoreDuplicates: true });
 
@@ -85,7 +90,7 @@ async function seedDatabase() {
       { id: 5, url: 'https://cdn/cuisine_inclusive.jpg', projet_id: 3, isMain: false, isPreview: true },
       { id: 6, url: 'https://cdn/raptor_museum.jpg', projet_id: 4, isMain: true, isPreview: true },
       { id: 7, url: 'https://cdn/inauguration.jpg', projet_id: 4, isMain: false, isPreview: false },
-      // Nouveaux
+      // Mises à jour des IDs pour correspondre aux nouveaux projets 04/06
       { id: 8, url: 'https://cdn/randonnee_ecotrail.jpg', projet_id: 5, isMain: true, isPreview: true },
       { id: 9, url: 'https://cdn/jardin_partage.jpg', projet_id: 6, isMain: true, isPreview: true },
       { id: 10, url: 'https://cdn/atelier_peinture.jpg', projet_id: 7, isMain: true, isPreview: true },
@@ -97,10 +102,9 @@ async function seedDatabase() {
     ];
     await db.Image.bulkCreate(images, { ignoreDuplicates: true });
 
-    console.log("✅ Données insérées avec succès (ou déjà présentes) !");
+    console.log("✅ Données insérées avec succès (Zone 83/06/04) !");
   } catch (error) {
     console.error("⚠️ Erreur lors de l'insertion des données :", error.message);
-    // On ne throw pas l'erreur pour ne pas bloquer le démarrage du serveur si c'est juste un détail
   }
 }
 
