@@ -7,7 +7,8 @@ import {
   TextInput,
   ScrollView,
   Keyboard,
-  Alert
+  Alert,
+  Image // AJOUT
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
@@ -18,6 +19,8 @@ import { Region } from 'react-native-maps';
 // Import du composant carte
 import { MapComp, Project } from '@/components/carte_comp';
 import { getAllProjets } from '@/api/projet';
+// AJOUT : Import de BASE_URL pour construire les liens images
+import { BASE_URL } from '@/api/url'; 
 
 // --- DONNÉES ---
 export type ProjectType = {
@@ -28,6 +31,7 @@ export type ProjectType = {
   categorie: string;
   latitude: number;
   longitude: number;
+  img: string; // AJOUT
 };
 
 const CATEGORIES = ['Tous', 'Environnement', 'Social', 'Culture', 'Economie'];
@@ -40,9 +44,44 @@ export default function HomeScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
 
+  // --- RÉCUPÉRATION ET FORMATAGE DES DONNÉES ---
   const fetchProjects = async () => {
-    const rep = await getAllProjets();
-    setProjects(rep);
+    try {
+      const rep = await getAllProjets();
+      
+      // On transforme les données pour préparer l'URL de l'image
+      const formatted = rep.map((item: any, index: number) => {
+          // 1. Image par défaut
+          let finalImageUrl = `https://picsum.photos/id/${(index % 50) + 150}/200/200`;
+          
+          // 2. Récupération via le tableau Images (API)
+          const imagesDuProjet = item.Images || item.images || [];
+
+          if (imagesDuProjet.length > 0) {
+              const imageObj = imagesDuProjet.find((img: any) => img.isMain) || imagesDuProjet[0];
+              
+              if (imageObj && imageObj.url) {
+                  if (imageObj.url.startsWith('http')) {
+                      finalImageUrl = imageObj.url;
+                  } else {
+                      // Gestion url locale avec BASE_URL
+                      const cleanPath = imageObj.url.startsWith('/') ? imageObj.url : `/${imageObj.url}`;
+                      finalImageUrl = `${BASE_URL}${cleanPath}`;
+                  }
+              }
+          }
+
+          return {
+              ...item,
+              // On s'assure que les champs correspondent au type ProjectType
+              img: finalImageUrl
+          };
+      });
+
+      setProjects(formatted);
+    } catch (e) {
+      console.error("Erreur fetch carte:", e);
+    }
   }
 
   useEffect(() => {
@@ -55,7 +94,6 @@ export default function HomeScreen() {
     return projects.filter((item) => {
       const matchesText = item.nom?.toLowerCase().includes(searchText.toLowerCase()) ||
           item.description?.toLowerCase().includes(searchText.toLowerCase());
-      // 'Tous' doit toujours retourner true
       const matchesCategory = selectedCategory === 'Tous' || item.categorie === selectedCategory;
       return matchesText && matchesCategory;
     });
@@ -88,20 +126,24 @@ export default function HomeScreen() {
   const snapPoints = useMemo(() => ['15%', '45%', '90%'], []);
 
   // Gestion Clic
-  const handleMarkerPress = (project: Project) => {
-    Alert.alert(project.nom, `${project.description}\nBudget: ${project.budget}`);
+  const handleMarkerPress = (project: any) => {
+    Alert.alert(project.nom, `${project.description}\nBudget: ${project.budget} €`);
   };
 
   // Rendu Liste
-  const renderItem = useCallback(({ item }: { item: Project }) => (
+  const renderItem = useCallback(({ item }: { item: ProjectType }) => (
       <TouchableOpacity style={styles.projectCard} onPress={() => handleMarkerPress(item)}>
-        <View style={styles.imagePlaceholder}>
-          <Ionicons name="image-outline" size={24} color="#4e8076" />
-        </View>
+        {/* REMPLACEMENT DU PLACEHOLDER PAR L'IMAGE */}
+        <Image 
+            source={{ uri: item.img }} 
+            style={styles.cardImage}
+            resizeMode="cover"
+        />
+        
         <View style={styles.cardInfo}>
           <Text style={styles.projectName}>{item.nom}</Text>
           <View style={styles.budgetRow}>
-            <Text style={styles.projectBudget}>{item.budget}</Text>
+            <Text style={styles.projectBudget}>{item.budget} €</Text>
             <View style={styles.smallBadge}>
               <Text style={styles.smallBadgeText}>{item.categorie}</Text>
             </View>
@@ -115,17 +157,17 @@ export default function HomeScreen() {
   return (
       <GestureHandlerRootView style={styles.container}>
 
-        {/* 1. CARTE (Affiche tous les projets filtrés, même hors écran pour savoir où aller) */}
+        {/* 1. CARTE */}
         <View style={styles.mapContainer}>
           <MapComp
               markers={mapMarkers}
               onMarkerPress={handleMarkerPress}
               onRegionChange={setCurrentRegion}
               initialRegion={{
-                latitude: 43.1167,
-                longitude: 5.93333,
-                latitudeDelta: 0.1,
-                longitudeDelta: 0.1,
+                latitude: 43.55, // Centré un peu plus large (Var/Alpes-Maritimes)
+                longitude: 6.5,
+                latitudeDelta: 1.5,
+                longitudeDelta: 1.5,
               }}
           />
         </View>
@@ -158,7 +200,6 @@ export default function HomeScreen() {
                       <TouchableOpacity
                           key={cat}
                           style={[styles.filterChip, selectedCategory === cat && styles.filterChipSelected]}
-                          // CORRECTION DU BUG DE CRASH ICI
                           onPress={() => {
                             if (selectedCategory !== cat) setSelectedCategory(cat);
                           }}
@@ -190,8 +231,8 @@ export default function HomeScreen() {
             <Text style={styles.sheetSubtitle}>Déplacez la carte pour voir plus</Text>
 
             <BottomSheetFlatList
-                data={listProjects} // Affiche uniquement ce qui est dans l'écran
-                keyExtractor={(item) => item.id}
+                data={listProjects}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
@@ -250,7 +291,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
     borderRadius: 16, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#e5f3f5',
   },
-  imagePlaceholder: { width: 60, height: 60, backgroundColor: '#f5f9f3', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  // NOUVEAU STYLE POUR L'IMAGE
+  cardImage: { 
+    width: 60, 
+    height: 60, 
+    borderRadius: 12, 
+    backgroundColor: '#f5f9f3',
+    borderWidth: 1,
+    borderColor: '#e5f3f5'
+  },
   cardInfo: { flex: 1, marginLeft: 15 },
   projectName: { fontWeight: '700', color: '#397262', fontSize: 15 },
   budgetRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4, justifyContent: 'space-between', paddingRight: 10 },
